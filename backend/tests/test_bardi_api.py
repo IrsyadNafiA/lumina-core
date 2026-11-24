@@ -1042,6 +1042,10 @@ def test_static_logo_routes_serve_svg_and_png(tmp_path: Path) -> None:
     assert png_res.status_code == 200
     assert "image/png" in png_res.headers["content-type"]
 
+    fav_res = client.get("/favicon.ico")
+    assert fav_res.status_code == 200
+    assert "image/png" in fav_res.headers["content-type"]
+
 
 
 

@@ -361,6 +361,13 @@ def create_app(
                 return Response(status_code=404)
             return FileResponse(str(icon_path), media_type="image/png")
 
+        @fastapi_app.get("/favicon.ico", include_in_schema=False)
+        async def serve_favicon_ico() -> Response:
+            icon_path = static_path / "luminacore-icon.png"
+            if not icon_path.is_file():
+                return Response(status_code=404)
+            return FileResponse(str(icon_path), media_type="image/png")
+
     return fastapi_app
 
 
