@@ -1,0 +1,58 @@
+{
+  "name": "@rafaelghif/aac-core",
+  "version": "6.4.0",
+  "description": "LLM-native engineering rules, multi-language skills, sandboxed subagents, and lifecycle hooks for Google Antigravity",
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "aac",
+    "aac-core",
+    "antigravity",
+    "antigravity-agents-core",
+    "google-antigravity",
+    "software-engineering",
+    "scrum",
+    "skills",
+    "subagents",
+    "hooks"
+  ],
+  "author": "Muhammad Rafael Ghifari <business.rafaelghifari@gmail.com>",
+  "license": "MIT",
+  "homepage": "https://github.com/rafaelghif/antigravity-agents-core",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rafaelghif/antigravity-agents-core.git"
+  },
+  "bugs": {
+    "url": "https://github.com/rafaelghif/antigravity-agents-core/issues"
+  },
+  "type": "module",
+  "main": "bin/cli.mjs",
+  "bin": {
+    "aac-core": "bin/cli.mjs",
+    "aac": "bin/cli.mjs"
+  },
+  "scripts": {
+    "test": "node --test tests/aac.test.mjs",
+    "pack:check": "npm pack --dry-run"
+  },
+  "files": [
+    "bin/",
+    ".agents/",
+    "!.agents/mcp_config.json",
+    "!.agents/mcp.env",
+    "AGENTS.md",
+    "CONTEXT.md",
+    "install.sh",
+    "install.ps1",
+    "README.md",
+    "LICENSE",
+    "SECURITY.md",
+    "CHANGELOG.md"
+  ],
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "packageManager": "npm@10.9.0"
+}

@@ -1,0 +1,435 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+## [6.4.0] - 2026-11-18
+
+### Added
+
+- **Monorepo Workspace Recon & Hub+Spoke Domain Context (`#01`)**:
+  - Upgraded `.agents/skills/index-project/scripts/scan-repo.mjs` with bounded recursive workspace discovery (`maxDepth = 5`, `<= 100` workspaces), per-workspace stack/command extraction, `layoutMode` (`single-context` vs `hub-and-spoke`), and fail-closed missing `--root` validation.
+  - Documented Hub+Spoke domain indexing (`CONTEXT.md` router + `docs/domains/<domain>.md`) in `/index-project` and `docs/agents/domain.md` while keeping single-package `single-context` backward-compatible.
+- **Parallel `/wave-execute` (Blackboard + Bounded Critic Loop) & Read-Only Specialist Subagents (`#05`)**:
+  - Added `.agents/skills/wave-execute/SKILL.md` implementing `ST-002` parallel Wave orchestration via `swarm`/`run_workflow` (`workspace: "share"`), shared Blackboard state (`SPRINT.md`/`HANDOFF.md`/`LESSONS.md`), and a Bounded Critic Loop (`max 2` fix rounds).
+  - Added read-only `.agents/agents/security-auditor.md` and `.agents/agents/architecture-planner.md`, and restricted `.agents/agents/adversarial-reviewer.md` to read-only tools (`INV-006`).
+- **Self-Learning Procedural Memory (`/self-learn`) & `PostToolUse` Back-Pressure**:
+  - Added `.agents/skills/self-learn/SKILL.md` and git-tracked `docs/learnings/LESSONS.md` (distilling rules from `human-feedback`, `web-research`, `browsing`, `code-review`, and `test-failure` sources with a `50`-entry cap, surfaced via `SessionStart`).
+  - Added `post-edit-backpressure` (`PostToolUse`) hook in `.agents/hooks.json` running immediate `JSON.parse` / `node --check` validation on written `.json`/`.js`/`.mjs`/`.cjs` files.
+- **Anti-Hallucination Ticketing, Real-Time Lifecycle & Upgraded Handover**:
+  - Upgraded `ticket-template.md`, `to-tickets/SKILL.md`, and `validate-board.mjs` to enforce **Exact File Touchpoints** (`CREATE`/`MODIFY`/`DELETE`), **Data, Schema & Error Matrix**, and **Do-Not-Invent** guards on `ready`/`in-progress` tickets.
+  - Enforced real-time ticket transitions (`in-progress` before coding, `done` immediately on completion), immediate downstream unblocking (`blocked` → `ready`), and mandatory per-1-ticket `/handoff` (`handoff-template.md` expanded with machine-portable preconditions, working tree snapshot, and unblocked queue).
+- **Evergreen Brand Identity (`assets/banner.png`, `assets/logo.svg`)**:
+  - Replaced version-locked `AAC v6.3` banner with a minimalist dark obsidian wide lockup PNG (`assets/banner.png`) and scalable vector icon (`assets/logo.svg`).
+- **Mandatory Mermaid Design Diagrams & Enterprise Ops / Perf / Tracker Docs (`#06`, `#07`)**:
+  - Added Mermaid `C4Container`, `erDiagram`, `sequenceDiagram`, and `stateDiagram-v2` gates across `/to-spec` (`spec-template.md`), `/domain-modeling`, and `/codebase-design`.
+  - Added `/perf-audit` (`.agents/skills/perf-audit/SKILL.md`), API Contract (`OpenAPI`/`AsyncAPI`), Rollout/Canary/Feature-Flag & Rollback SOP, and Observability SLI/SLO & Runbook sections to `spec-template.md`, CI `gitleaks`/SBOM/Runbook checks to `release-audit.md`, and Jira/Linear/GitLab integration guides to `docs/agents/issue-tracker.md`.
+
+### Changed
+
+- **Enterprise Strict Configurable Guardrails (`#02`, `#03`, `#04`)**:
+  - Upgraded `quality-gate-stop-sensor` in `.agents/hooks.json` to map modified/untracked files (`-uall`) to their nearest monorepo workspace manifest and execute `typecheck`, `lint`, and `test` sequentially (`AAC_STOP_TEST_TIMEOUT_MS` default `60000`, `AAC_STOP_RUN_TYPECHECK`, `AAC_STOP_RUN_LINT`).
+  - Upgraded `.agents/git-guard.cjs` (`docs/adr/0005-enterprise-strict-git-and-stop-guards.md`, superseding ADR-0004 guard scope) to protect `main`/`master`/`release/*`/`production`/`staging` pushes plus `reset --hard`, `clean -fd`, and raw `--force`/`-f` pushes (`--force-with-lease` on feature branches allowed; `AAC_GIT_GUARD_MODE=legacy` fallback).
+  - Expanded OWASP/Gitleaks-aligned non-echoing secret scanning (`aws-key`, `github-token`, `slack-token`, `gcp-key`, `stripe-key`, `db-uri-password`, `jwt-literal`, `private-key`) across `production-no-mock-guard` and `audit-diff.mjs`.
+- **Strict Traceability Validators & Token Optimization (`#08`)**:
+  - Upgraded `validate-spec.mjs` to enforce 100% `REQ`/`NFR`/`SEC` traceability coverage in §9 and Mermaid/API/Rollout/Observability contract presence on `READY FOR TICKETS` specs.
+  - Upgraded `validate-board.mjs` to reject `ready` or `in-progress` tickets blocked by unfinished dependencies.
+  - Deduplicated checklists across `AGENTS.md` and `ticket-template.md` into canonical references to `review-rubric.md`.
+
+### Fixed
+
+- **Self-Hosting Hook Hermeticity & Untracked Directory Scanning**:
+  - Isolated `runHook`/`runHookRaw` in `tests/aac.test.mjs` via `cleanHookEnv()` so `P0-7` passes when `npm test` runs inside `quality-gate-stop-sensor`.
+  - Fixed `audit-diff.mjs` and `quality-gate-stop-sensor` to use `git status --porcelain -uall` so files inside newly created untracked directories are never skipped.
+
+## [6.3.0] - 2026-11-18
+
+### Added
+
+- **Multi-Language Support (Dart/Flutter, Go, Python, Rust, JVM, Swift, JS/TS)**:
+  - Expanded `coding-standards.md`, `ui-and-dry.md`, `testing.md`, and `.agents/hooks.json` beyond JS/TS to cover `*.dart`, `*_test.dart`, `integration_test/`, `pubspec.yaml` (`flutter test` / `dart test`), `Package.swift`, `mix.exs`, and JVM test conventions.
+  - Added Flutter/Dart specifics: `const` widget rebuild optimization, `ListView.builder` virtualization, `Isolate`/`compute` offloading, `ThemeData`/`ColorScheme` token reuse, and mandatory `dispose()` cleanup.
+- **Shared UI & Frontend/Mobile DRY Rule (`.agents/rules/ui-and-dry.md`)**:
+  - `glob`-triggered rule enforcing pre-UI primitive/token discovery, `Reuse → Extend → Compose → Create` component hierarchy, mandatory UI state handling (`loading`, `empty`, `error`, `disabled`, accessibility), and resource disposal.
+- **Codebase Indexing Skill (`.agents/skills/index-project/`)**:
+  - Added `/index-project` with black-box multi-language scanner `scripts/scan-repo.mjs` (`--help`, `--json`) to populate `CONTEXT.md` with verified stack versions, config/logging seams, UI primitives, shared helpers, and verification commands.
+- **4-Bundle Antigravity Skill Resources & Black-Box Validators**:
+  - Added `--help`-compatible validator scripts: `.agents/skills/to-spec/scripts/validate-spec.mjs`, `.agents/skills/to-tickets/scripts/validate-board.mjs`, and `.agents/skills/implement/scripts/audit-diff.mjs`.
+  - Added `references/` checklists and `examples/` across `discover`, `codebase-design`, `domain-modeling`, `tdd`, and `code-review`.
+- **Cross-Machine Handover & Secret Leak Guard**:
+  - Updated `/handoff` and `git-and-context.md` to persist git-tracked handover state in `docs/sprint/HANDOFF.md` alongside `.scratch/handoff.md`.
+  - Added hardcoded credential/key literal detection (`sk_live_`, `ghp_`, `AKIA`, private keys) to `production-no-mock-guard` and `audit-diff.mjs`.
+- **CLI Enhancements (`bin/cli.mjs`)**:
+  - Added `--help`/`-h`, `--version`/`-v`, `--target=<dir>` support, and safe pruning of unmodified deprecated managed files during `upgrade`.
+
+### Changed
+
+- **LLM-Native `AGENTS.md` (< 10 KB)**: Rewrote `AGENTS.md` from 27,270 bytes (which exceeded Antigravity's 24 KB limit and truncated the bottom rules/skills index) down to ~9.7 KB of direct, zero-slang execution invariants, adding a 7-dimension Mandatory Ambiguity Gate (`ask_question` on unclear prompts/PRDs/tickets) and pre-code configurability/logging/performance/security checks.
+- **Glob-Triggered Core Rules**: Converted `coding-standards.md` and `database-migrations.md` from `model_decision` to `trigger: glob` so code/SQL invariants auto-load when matching files are touched; removed redundant `caveman.md` and `ponytail.md`.
+- **Built-in `/grill-me` Collision Fix**: Renamed custom `grill-me` skill to `discover` with a mandatory live-research (`search_web`) gate before recommending libraries or architectures.
+- **Surface-Compatible Subagents & Package Metadata**: Updated `.agents/agents/*.md` tools to native cross-surface Antigravity tool names (`read_file`, `edit_file`, `write_file`, `run_command`, `manage_task`, `search_web`), updated `README.md`, refreshed `assets/banner.png` as a genuine wide PNG, and updated `package.json` metadata.
+
+### Fixed
+
+- **Stop Hook `NO_TOOL_CALL` & False-Positive Fixes (`.agents/hooks.json`)**:
+  - Fixed `quality-gate-stop-sensor` to match Antigravity's documented `NO_TOOL_CALL` / `MAX_INVOCATIONS` `terminationReason` values (replacing non-existent `'model_stop'`) and respect `continuationActive` to prevent continuation loops.
+  - Restricted Stop diff test-tampering checks to test files only, eliminating false positives on documentation/hook diffs.
+
+## [6.2.1] - 2026-11-09
+
+### Fixed
+
+- **Installer Pinned Ref Synchronization**: Aligned default `AAC_REF` in `install.sh` and `$ref` in `install.ps1` to pinned `v6.2.1` so remote piped one-liners (`curl ... | bash` and `irm ... | iex`) download the matching archive instead of falling back to stale tags.
+- **Security Documentation Truth-Up**: Synchronized pinned download reference in `SECURITY.md` to `v6.2.1`.
+- **Installer Version Regression Test Gate**: Extended test `P0-6` in `tests/aac.test.mjs` to strictly assert that `install.sh`, `install.ps1`, `bin/cli.mjs`, and `SECURITY.md` always match `package.json.version`.
+
+## [6.2.0] - 2026-11-09
+
+### Added
+
+- **Discovery Decision Record (DDR) Pipeline**:
+  - `grill-me` now ends in `docs/discovery/<feature-slug>.md` instead of a chat summary. Every settled decision gets a `DEC-###`, every open question `OQ-###`, and every approved assumption `ASM-###`, with alternatives, rationale, consequences, and a completeness gate.
+  - `to-spec` now requires the confirmed DDR, applies an explicit source-priority hierarchy, builds a Fact Ledger (`KNOWN`/`OPEN`/`ASSUMED`/`N/A`), maps every DDR section into the spec, and refuses to mark `READY FOR TICKETS` while a ticket-blocking unknown remains. The spec template gained `Source` columns and fill rules; `resources/spec-example.md` shows the required provenance detail.
+  - `to-tickets` now consumes the readiness-passed spec plus the DDR, derives tickets from observable behavior through a coverage ledger, cites `Source Requirements`/`Source Decisions` on every ticket, rejects filler/vertical-less tickets, and validates source coverage before presenting the board.
+  - `domain-modeling` now reconciles `CONTEXT.md`, the DDR, specs, ADRs, and code; detects contradictions instead of silently resolving them; and emits a propagation report for every changed ID.
+  - `implement` and `code-review` now treat uncited behavior as a defect: a ticket/spec ID or repository `path:line` must back every requirement, number, schema, and command.
+
+- **Production-Grade by Default (Anti-MVP Contract)**:
+  - Added an always-on `Production-Grade by Default (Anti-MVP Quarantine)` invariant to `AGENTS.md` and `coding-standards.md`: "MVP" now means the smallest complete, deployable, production-safe slice, never permission to omit validation, authorization, tests, observability, migrations, or rollback. Throwaway spikes are quarantined outside production paths.
+  - `to-spec` now enforces measurable NFR budgets, security/privacy/abuse contracts, failure and rollback contracts, observability, and a `REQ/INV/NFR/SEC/ERR` traceability matrix before tickets are generated.
+  - `to-tickets` now emits production-grade vertical slices with traceability IDs, a Production Quality Contract, anti-deferred-hardening rules, ticket hygiene controls, and an enterprise Definition of Done. The sprint board gained a traceability matrix, wave exit gate, and board change control.
+  - `domain-modeling` now treats invariants, state machines, ownership boundaries, data classification, and measurable quality attributes as first-class domain artifacts, and the ADR template records reversibility, 6-Pillar decision drivers, and migration/rollback consequences.
+  - `implement`, `tdd`, and `code-review` now explicitly reject happy-path "MVP" stubs: implementation must be the smallest complete production behavior, and review flags prototype debt as a blocking finding.
+  - `CONTEXT.md` now carries stable invariant (`INV-###`), state-machine (`ST-###`), NFR, and error IDs plus authentication/ownership boundaries, so specs, tickets, and tests share one traceable source of truth.
+
+### Changed
+
+- **Skill Descriptions and Templates**: `to-spec`, `to-tickets`, `implement`, `tdd`, and `domain-modeling` descriptions now advertise production-grade triggers; `grill-me` settles the production quality frontier before feature details; `to-spec` and `to-tickets` templates were rebuilt around production readiness rather than MVP scaffolding.
+- **Documentation Truth-Up**: `README.md`, `docs/agents/skill-directory.md`, and `docs/agents/domain.md` now document the anti-MVP quality bar and traceability artifacts.
+
+### Fixed
+
+- **Prototype-Quality Drift**: Removed the "minimal production logic" wording that invited happy-path stubs and replaced it with mandatory production hardening gates across the spec → ticket → implement → review pipeline.
+
+## [6.1.0] - 2026-11-03
+
+### Added
+
+- **30-Year Systems Engineering Standards (`AGENTS.md`, `coding-standards.md`, `ponytail.md`)**:
+  - Encoded Rich Hickey's *Simplicity as Unentanglement* (simplicity is an architectural property: decoupled state, orthogonal boundaries, explicit data flow, NOT character truncation or cryptic one-liners).
+  - Eliminated the Ponytail Rung 6 "One-Liner" anti-pattern in favor of *Clarity & Explicit Invariants* (boring, linear, typed code with guard clauses that can be debugged at 3 AM).
+  - Codified the principle of *Broad Holistic Ingestion, Surgical Precision Emission* to eradicate the false economy of token-starvation.
+- **Dynamic Context Bootstrap (`.agents/hooks.json`)**:
+  - Upgraded `SessionStart` lifecycle hook to dynamically inspect workspace state. When only `CONTEXT.md` exists, guides the agent to domain context without hallucinating instructions to read non-existent `.scratch/handoff.md` and `docs/sprint/SPRINT.md`.
+- **Dual-Platform Tool Matcher & Argument Extraction (`.agents/hooks.json`)**:
+  - Expanded `production-no-mock-guard` tool matcher to include `write_file` and `edit_file` alongside `write_to_file`, `replace_file_content`, and `multi_replace_file_content`.
+  - Added support for `Path` and `Replacement` arguments, ensuring full protection across all Antigravity CLI, IDE, and subagent surfaces.
+- **Fast-Path Workflow Execution (`.agents/skills/implement/`, `.agents/skills/to-tickets/`)**:
+  - Added fast-path decision branches to `/implement` and `/to-tickets` allowing isolated bugfixes and single-session feature slices to land directly via TDD without forcing unnecessary Scrum Sprint ticket bureaucracy.
+- **Presumption-Free Topology & Plain-Import Simplicity (`AGENTS.md`, `architecture-and-flow.md`)**:
+  - Inhibited premature generation of monorepo build orchestrators (Turborepo, Nx, Lerna), scoped package schemes (`@repo/*`), and tsconfig path aliases (`@/*`).
+  - Mandated interview-first clarification via `ask_question` with standard relative imports (`./`, `../`) as the default simplicity baseline.
+- **Strict English Technical Artifact Standard with Adaptive Localization (`AGENTS.md`, `caveman.md`, `coding-standards.md`, `git-and-context.md`)**:
+  - Mandated that all written repository artifacts (source code, identifiers, docstrings, commit messages, PR descriptions, specs, and docs) must be strictly in English.
+  - Conversational chat and explanations dynamically adapt to the human prompter's language (e.g. Indonesian).
+
+## [6.0.1] - 2026-11-02
+
+### Added
+
+- **Open Source Acknowledgements & Lineage (`README.md`)**: Formally accredited community foundations in `README.md`, recognizing Matt Pocock (`mattpocock/skills`) for workflow orchestration patterns (`/grill-me`, `/to-spec`, `/to-tickets`, `/implement`), Caveman communication protocol, and Ponytail minimalist engineering principles, alongside foundational software architecture literature.
+- **`browsing` Skill (`.agents/skills/browsing/`)**: Standards-compliant Antigravity browser automation skill featuring the official 4-folder anatomy (`scripts/run-browser.mjs`, `examples/e2e-journey-example.mjs`, `references/locators-and-patterns.md`, `references/antigravity-subagent.md`), strict when-to-use vs anti-pattern decision boundaries, and integration with the `/browser` subagent and Playwright runners.
+- **`research` Skill (`.agents/skills/research/SKILL.md`)**: Standards-compliant Antigravity deep technical research and empirical grounding skill featuring 4 structured phases (Question Decomposition & Year-Anchored Query Matrix, Live Web Search & Exhaustive Primary Ingestion, Cross-Source Triangulation & Falsification, Structured Evidence Synthesis & Artifact Generation). Decouples documentation/API research from UI testing and eliminates 2024 parametric memory hallucination.
+- **`office` Skill (`.agents/skills/office/`)**: Standards-compliant Antigravity document processing skill featuring the official 4-folder anatomy (`scripts/extract-office.py`, `examples/generate-report.py`, `references/office-formats-and-tools.md`, `references/document-conversions.md`), multimodal native ingestion guidance, and automated Excel/Word/PDF generation.
+- **`.gitattributes` Line-Ending Determinism**: `* text=auto eol=lf` with `*.ps1 eol=crlf` and explicit binary rules, so the test suite and hooks no longer break on Windows checkouts with `core.autocrlf=true`.
+- **MCP Credential Template Pair (`.agents/mcp_config.example.json`, `.agents/mcp.env.example`)**: Production-ready GitHub MCP server template using cross-platform Node stdio (`@modelcontextprotocol/server-github`) with zero Docker daemon dependency, reading tokens from `env` or `.agents/mcp.env` with explicit timeouts.
+- **Verification & Platform Contract table (`README.md`)** and **`SECURITY.md` hook/mock threat model**: documents which guard covers which tool argument and which parts of the Antigravity lifecycle contract are actually relied on.
+- **ADR 0004 (`docs/adr/0004-inline-node-lifecycle-hooks.md`)**: records the inline `node -e` hook architecture, the `workspacePaths` contract, and the file-based task memory decision.
+- **Working `AAC_PERSONA=neutral` Switch**: the `SessionStart` hook now reads `AAC_PERSONA` and injects a clinical Staff Engineer prose directive when it is `neutral`; previously the switch was advertised in `AGENTS.md` and `README.md` but nothing consumed it.
+- **Mandatory Live Research & 2024 Training Cutoff Alarm (`AGENTS.md`, `coding-standards.md`, `caveman.md`)**: Strictly eliminates outdated parametric hallucination and laziness. Alerts the agent that model training data cut off in 2024 and is 2+ years obsolete in late 2026. Mandates immediate invocation of `search_web` / `read_url_content` whenever the user asks for best practices, latest documentation, or searching; forbids answering from internal parametric weights without live verification; enforces deep URL content ingestion (not just skimming search snippets); and consolidates top-level **Strict Negative Constraints (Zero Exceptions)**.
+- **Exhaustive Reading & Anti-Skimming Invariant (`AGENTS.md`, `coding-standards.md`, `ponytail.md`, `caveman.md`)**: Strictly eliminates shallow title-only skimming, unverified assumptions, and rogue disobedience. Mandates complete end-to-end ingestion of requested files, documents, and specifications (with systematic chunk paging), forbids extrapolating unread lines from titles or filenames, grounds all assertions in verifiable line citations, and enforces strict operational obedience to explicit user directives ("nurut instruksi, zero suka-suka").
+- **Quality Gate Stop Hook & Anti-Premature Completion Sensor (`.agents/hooks.json`, `AGENTS.md`, `testing.md`, `SECURITY.md`)**: Eradicates premature task completion ("mudah puas / gamau validate"). Introduces `quality-gate-stop-sensor` in `.agents/hooks.json` which intercepts `Stop` events on `model_stop`; checks for uncommitted modifications via `git status --porcelain`; automatically executes project verification test suites (`npm test`, `cargo test`, `pytest`, `go test ./...`); and rejects termination with `decision: "continue"` if regressions exist, forcing the agent to stay in the loop and fix failing tests before stopping. Covered by test `P0-7`.
+- **Anti-Test-Tampering & Contract Inviolability Invariant (`AGENTS.md`, `testing.md`, `coding-standards.md`, `diagnosing-bugs`, `tdd`, `implement`, `code-review`, `.agents/hooks.json`)**: Eliminates the catastrophic agent failure mode where agents bypass or tamper with unit tests (adding `.skip`, `xit`, deleting assertions, or weakening assertions to tautological `expect(true).toBe(true)`) to fake green test passes instead of fixing production logic. Upgrades `production-no-mock-guard` with PreToolUse test-tampering detection; enhances `quality-gate-stop-sensor` with Stop-event `git diff` inspection that automatically detects test skipping or tampering and returns `decision: "continue"`; codifies Rule 7 in `testing.md`; and hardens `diagnosing-bugs`, `tdd`, `implement`, and `code-review` workflows to enforce that production logic must satisfy tests. Covered by tests `P0-4`, `P0-7`, and `P1-6`.
+- **Anti-Looping Circuit Breaker & Zero-Thrashing Protocol (`AGENTS.md`)**: Eliminates the "polite loop" failure mode identified in SWE-bench 2026 trajectories. Enforces a 2-strike pivot rule (stopping blind code modifications upon consecutive test failures), a 3-strike rollback rule (reverting speculative trial edits before piling hacks), and context poisoning prevention (filtering noisy terminal dumps to protect attention).
+
+### Changed
+
+- **Professional `README.md` Architecture & Skills Directory**: Fully overhauled `README.md` with clear value proposition ("Why Antigravity Agent Core?"), interactive 15-skill & 3-subagent directory organized by SDLC phase, file tree truth-up (`.agents/git-guard.cjs`, `.agents/mcp.env.example`, `resources/browser-test-template.mjs`), and copy-pasteable multi-platform installer commands.
+- **Full Operational Subagents (`.agents/agents/*.md`)**: Upgraded all custom subagents (`codebase-investigator`, `adversarial-reviewer`, `verification-runner`) with full operational tools (`view_file`, `write_to_file`, `replace_file_content`, `multi_replace_file_content`, `list_dir`, `find_by_name`, `grep_search`, `search_web`, `read_url_content`, `run_command`) and `commandExecutionPolicy: sandbox`, eliminating artificial read-only restrictions.
+- **Anti-Boilerplate & Zero-Duplicate Component Invariants**: Enforced strict DRY/KISS/YAGNI protocol across `AGENTS.md`, `ponytail.md`, `coding-standards.md`, `implement`, and `code-review`. Mandates "Discovery Before Creation": agents must inspect existing directories (`components/`, `ui/`, `utils/`, `lib/`) via `grep_search` before authoring new code. Strictly bans creating duplicate UI components, parallel utility functions, or bespoke wrappers for patterns already handled by existing templates, UI libraries, or project helpers.
+- **Review & PR Output Contracts Hardened**: `code-review` adds a secrets/supply-chain axis and requires real diff line numbers instead of invented ranges; `pr` gained a `## Security & Data Impact` section (auth/authz, secrets, migrations, pinned dependencies); `release-audit` gained supply-chain and secret-hygiene checks.
+- **`tests/aac.test.mjs` Rewritten as an Executable Contract**: CRLF-robust frontmatter parsing, exact skill/rule/subagent name sets, agentskills.io name/description limits, official subagent tool whitelist, `workspacePaths` session-hook test, corrupt-manifest fail-closed test, and relative-link integrity across managed markdown.
+- **Streamlined Git Push Guard (`.agents/hooks.json`)**: Refactored git guard to eliminate over-engineered blocking of everyday development operations (checkout, branch, commit, stash, restore). The hook now specifically and cleanly intercepts direct pushes to protected `main` or `master` branches (`git push origin main`, `git push -f origin main`) with `decision: "ask"`, removing all Windows shell quote collisions.
+- **Installer Fail-Closed (`bin/cli.mjs`)**: malformed `.aac-manifest.json` and `~/.gemini/config/config.json` now abort instead of silently discarding user state; duplicate sidecar install call removed; sidecars install before the source-repo early return; unknown positional arguments rejected; generated `.gitignore` ignores `.agents/mcp.env`.
+- **Installers Are Now Thin Delegates (`install.sh`, `install.ps1`)**: both resolve `bin/cli.mjs` and hand off every write, so there is exactly one manifest-tracked, non-destructive write path. The duplicated copy logic (~90 lines each) skipped backups, hashing, and `.aac-new` staging, silently clobbering user edits while SECURITY.md claimed the opposite. Both now fail fast on missing or too-old Node (>= 22) instead of pretending a no-Node install works when the hooks are Node programs; `AAC_REF` pins the download and a missing ref errors out instead of silently falling back to a mutable branch.
+- **Documentation Truth-Up**: `docs/agents/skill-directory.md` rewritten for the 15 skills that actually ship; `docs/agents/issue-tracker.md` and `docs/agents/triage-labels.md` no longer reference nonexistent plugins, MCP tools, or skills; `docs/agents/antigravity-platform.md` gained §13 customization discovery contracts and §14 MCP credential hygiene; `README.md` badges and rule triggers corrected.
+- **ADR Status Corrections**: ADR 0001 amended to the shipped `model_decision`/`glob`/`manual` rule triggers, ADR 0002 marked *Superseded by ADR 0004*, ADR 0003 marked *Withdrawn (never implemented)*.
+- **`AGENTS.md` Constitution Tightened**: the progressive-disclosure index now lists all 9 shipped rules (3 were silently missing), adds an explicit *consent before irreversible actions* invariant (no unrequested commits, pushes, or destructive commands), drops the invented `<thinking_rubric>` tag in favour of a plain internal verification rubric, and aligns the mock-location list with the actual guard exemptions.
+- **Rules Corrected**: `architecture-and-flow.md` no longer mandates a circuit breaker on every integration (timeout + bounded retries are mandatory; breakers are required only where failure amplification is real); `git-and-context.md` adds the commit-consent rule and syncs its destructive list with `.agents/hooks.json`; `release-audit.md` documents its `manual` (`@`-mention-only) activation; `testing.md` globs now cover `__tests__/`, `fixtures/`, and `mocks/`; `caveman.md` prefers portable `path:line` references and relative links in committed docs.
+- **Skills Corrected**: `safe-refactor` no longer recommends `git checkout -- <file>` (it destroys the user's uncommitted work; it now uses `replace_file_content`/`git stash push -- <file>`); `implement` and `handoff` only commit when the user authorized commits and otherwise record a pending commit; `to-spec` creates `specs/` when absent; `grill-me` uses the canonical `/docs/commands/grill-me/` URL.
+
+### Removed
+- **Standalone No-Node Install Path (`install.sh`, `install.ps1`)**: consolidated in `v6.0.0`. Both installers require Node.js >= 22 and exit with an actionable error to ensure lifecycle hook and guard integrity.
+- **`docs/audit-checklist-64-skills.md`**: described a 64-skill catalog and a 100% audit that never matched the shipped artifact.
+- **`docs/templates/handoff.template.md`**: dead duplicate of `.agents/skills/handoff/resources/handoff-template.md`.
+
+### Fixed
+- **`install.ps1` Broke Every Hook on Windows**: its no-Node fallback merged hooks with `ConvertTo-Json | Set-Content -Encoding UTF8`, which in Windows PowerShell 5.1 writes a UTF-8 BOM — `JSON.parse` rejects that, so `.agents/hooks.json` silently stopped loading. The fallback (and its second, unmanaged write path) is gone.
+- **`install.sh` Leaked Its Temp Archive**: `exec node ...` replaced the shell before the `EXIT` trap could fire, so the extracted archive stayed in `mktemp -d` forever. The CLI is now invoked as a normal child process.
+- **MCP Templates Were Never Installed**: `SECURITY.md` and `docs/agents/issue-tracker.md` told users to create `.agents/mcp_config.json` from `.agents/mcp_config.example.json`, but `init`/`upgrade`/the installers never wrote either template. `.agents/mcp_config.example.json` and `.agents/mcp.env.example` are now manifest-tracked managed files (installed when absent, updated non-destructively, removed on uninstall).
+- **Installers Recommended Mutable-Branch Execution**: both headers and the README recommended `curl .../main/install.sh | bash` and `irm .../main/install.ps1 | iex` while the payload was pinned to `v6.0.0`. Documentation now uses the pinned tag, offers download-inspect-run first, and the archive download no longer silently downgrades to `heads/main`.
+- **Windows Test Failure**: `Missing frontmatter in rule architecture-and-flow.md` caused by CRLF line endings against a `\n`-only regex — fixed at the repository root (see `.gitattributes`) rather than by weakening the assertion.
+- **Hook Bypasses**: proven bypasses via `git -C <path> push --force`, `git -c ... reset --hard`, `git --no-pager reset --hard`, `sudo git push -f`, `env FOO=1 git clean -fd`, `bash -c 'git reset --hard'`, and `replace_file_content` (`ReplacementContent`) are now covered by regression tests.
+- **Progressive-Disclosure Drift**: `tests/aac.test.mjs` now fails when a shipped rule is missing from the `AGENTS.md` index, references a phantom rule path, lacks a `description`, exceeds the 24 KB per-file limit, or when a skill routes to a non-existent `/<skill>`; it also asserts the neutral-persona injection.
+- **Uninstall Path Traversal (`bin/cli.mjs`)**: manifest keys are untrusted input. `uninstall` now accepts only AAC-managed prefixes, rejects `.`/`..` segments, enforces containment inside the target directory, and skips directories or symlinks; a crafted `.aac-manifest.json` can no longer delete repository or out-of-tree files. Covered by a new `P0-5` test.
+- **Guards Failed Open**: a malformed hook payload returned `decision: "allow"`, silently disabling both guards. They now return `decision: "ask"` with a fail-closed reason, and the regression test parses raw invalid stdin.
+- **Git Guard Windows Quoting & Direct Push Protection**: Guard now strictly intercepts direct pushes to protected `main` and `master` branches, eliminating brittle regex patterns and Windows `cmd.exe /c` quoting failures.
+- **Security Rule Was Technically Wrong**: removed the non-existent `subtle.timingSafeEqual` API, documented the equal-length requirement for `crypto.timingSafeEqual` (hash both sides first), fixed the path-containment check (`resolved === base || startsWith(base + sep)`, `fs.realpath`, case-insensitive comparison, percent-decoding), and expanded the SSRF blocklist (CGNAT, benchmarking, multicast, reserved, NAT64, 6to4, `::/128`).
+- **Precision Fixes in Rules**: replaced the unrealistic "sub-millisecond transaction" mandate with bounded-transaction guidance; corrected the Rails helper to `disable_ddl_transaction!`; documented volatile-default table rewrites; called out that `JSON.stringify` throws on `BigInt`; and required one canonical UTC timestamp form per API.
+
+## [6.0.0] - 2026-10-28
+
+### Changed
+
+- **Architectural Consolidation & Deep Modules**: Consolidated 64 fragmented legacy skills into 13 high-impact deep modules, eliminating redundant multi-variants (Caveman, Ponytail, and Grilling fragments) in favor of deep public seams and John Ousterhout's module depth philosophy.
+- **Savage Gen-Z Principal Engineer Constitution (`AGENTS.md`)**: Established an anti-sycophantic, high-signal engineering pair-programming persona anchored in the 6 Non-Negotiable Engineering Pillars (*Future-Proof, Scalable, Maintainable, Secure, High-Performance, Upgradeable*). Supports `AAC_PERSONA=neutral` for formal enterprise environments.
+- **User-Defined Architecture Protocol**: Removed rigid static folder and layer dogma; replaced with dynamic discovery and an interview-first protocol (`/grill-me`, `ask_question`) recorded in `CONTEXT.md`.
+- **Technical Scrum Waves DAG Engine**: Upgraded `/to-tickets`, `/implement`, and `/handoff` with a committed Sprint Wave Board (`docs/sprint/SPRINT.md`), session-sized vertical tracer-bullet tickets, Definition of Ready (DoR), Definition of Done (DoD), and cross-session handover logs.
+- **Native Sandboxed Subagents**: Introduced 3 specialized custom subagents (`adversarial-reviewer`, `codebase-investigator`, `verification-runner`) with least-privilege tool access and execution isolation (`commandExecutionPolicy: sandbox` / `off`).
+- **Non-Destructive SHA-256 Manifest Installer**: Upgraded `bin/cli.mjs`, `install.sh`, and `install.ps1` to track managed file hashes in `.agents/.aac-manifest.json`, back up user modifications to `.scratch/backups/`, stage upstream changes as `.aac-new`, and support `--dry-run`, `--force`, and `uninstall`.
+- **Cross-Platform Node JSON Lifecycle Hooks**: Converted regex-based shell hooks in `.agents/hooks.json` to cross-platform Node JSON parsers intercepting destructive git commands and production mocks with an interactive `decision: "ask"` policy.
+- **Automated Verification Suite**: Added `tests/aac.test.mjs` verifying installer idempotency, backup integrity, hook safety contracts, subagent policies, and packaging.
+
+## [5.4.0] - 2026-10-25
+
+### Added
+
+
+- **Google Antigravity 2.0+ Platform Features & Best Practices ([docs/agents/antigravity-platform.md](docs/agents/antigravity-platform.md))**: Comprehensive master platform reference documenting 10 core Antigravity capabilities: Direct Subagent Messaging (`invoke_subagent`, `send_message`), Explore-Plan-Execute phased protocol, Native Lifecycle Hooks (`PreToolUse`, `PostToolUse`, `PreInvocation`, `PostInvocation`, `Stop`), Headless Automations, Subagent Git Worktree isolation (`Workspace: "branch"` / `"share"`), Multimodal Office/Zip attachments, Docked Prompts (`ask_question`), 20,000-token rules budget, `/compact` slash command, and `.gemini/config.json` project-level configuration.
+- **Explore -> Plan -> Execute & Subagent Worktree Isolation Guidelines ([.agents/rules/architecture-and-flow.md](.agents/rules/architecture-and-flow.md))**: Added Section 5 establishing formal architectural exploration, structured plan presentation before large diffs, and mandatory Git worktree isolation for concurrent subagent spikes.
+- **Worktree Concurrency & VCS Panel Integration ([.agents/rules/git-workflow.md](.agents/rules/git-workflow.md))**: Added Section 3 mandating isolated git worktrees for parallel agentic development and atomic diff segregation for Antigravity's VCS review panel.
+- **Open-Source Lineage & Acknowledgements ([README.md](README.md))**: Explicit attribution crediting foundational inspirations from Matt Pocock (Engineering skills suite), Julius Brussee (Caveman token compression), and Google Antigravity.
+
+### Changed
+
+- **Upstream Skill Hardening & Antigravity Compatibility**:
+  - **`diagnosing-bugs` ([.agents/skills/diagnosing-bugs/SKILL.md](.agents/skills/diagnosing-bugs/SKILL.md))**: Added forced mutation diff check to ensure bug reproduction occurs prior to applying behavioral patches.
+  - **`tdd` ([.agents/skills/tdd/SKILL.md](.agents/skills/tdd/SKILL.md))**: Added explicit seam catch/miss trade-off analysis between public interface tests and fine-grained unit mocks.
+  - **`grilling` ([.agents/skills/grilling/SKILL.md](.agents/skills/grilling/SKILL.md))**: Standardized question phrasing to place `(Recommended)` options in the first slot for consistent Antigravity docked prompt UX.
+  - **`implement` ([.agents/skills/implement/SKILL.md](.agents/skills/implement/SKILL.md))**: Added pre-flight ticket fetching and title confirmation step to prevent out-of-sync implementations.
+  - **`wizard` ([.agents/skills/wizard/template.sh](.agents/skills/wizard/template.sh))**: Wrapped wizard execution in `run_wizard` with defensive subshell isolation, ANSI clear fallback for non-TTY terminals, safe `.env` quote decoding, and export of parsed variables into shell scope.
+- **Version Bump**: Bumped version to `5.4.0` across manifests (`package.json`), CLI (`bin/cli.mjs`), installers (`install.ps1`, `install.sh`), test suites (`tests/cli.test.mjs`), and documentation adhering to SemVer 2.0.0.
+
+## [5.3.1] - 2026-09-24
+
+### Fixed
+- **Publish Pipeline Idempotency (`.github/workflows/publish-package.yml`)**: Added pre-publish existence checks for both npm and GitHub Packages registries to prevent pipeline failure when publishing already-published versions.
+- **Node.js Runner Runtime (`.github/workflows/publish-package.yml`)**: Upgraded GitHub Actions workflow runner Node.js runtime from Node.js 20 to Node.js 22, resolving runner deprecation warnings.
+- **CI Test Suite Markdown Link Integrity (`tests/lifecycle-guardrails-and-engines.test.mjs`, `AGENTS.md`)**: Formatted gitignored private secrets (`.agents/mcp_config.json`) as code blocks to prevent broken-link false positives during CI checks in clean checkout environments.
+- **Git Push Operator Consent Override (`.agents/hooks/block-dangerous-git.cjs`, `.agents/hooks/security-scanner.cjs`)**: Added `AAC_ALLOW_GIT_PUSH=1` environment variable support to allow deliberate maintainer release pushes while keeping automated agent guardrails active.
+
+## [5.3.0] - 2026-09-24
+
+### Added
+
+
+- **Master Skill Routing Directory & Quality-First Manifesto (`docs/agents/skill-directory.md`)**: Comprehensive master reference mapping all 64 workspace skills across 10 operational categories, with explicit trigger conditions, input requirements, output artifacts, and quality-first verification requirements.
+- **Environment Template & Diagnostics (`.env.example`)**: Added comprehensive environment template matching `.env` across Gitea, GitHub, and MCP database drivers, with `Environment Config` diagnostic check integrated into `aac doctor`.
+- **Universal PreInvocation Hook Contract (`memory-engine.cjs`)**: Conformed hook payload output to the official Antigravity specification returning `{ injectSteps: [{ ephemeralMessage: "..." }] }`, actively injecting session continuity reminders into agent context at invocation.
+- **Multi-Language Quality Guard Expansion (`quality-guard.cjs`)**: Added automated detection for `throw new Error("not implemented/todo/stub")` and placeholder API endpoints (`dummy.api`, `mock.api`, `placeholder.com`), intercepting stubs before filesystem writes.
+- **Cross-Platform CJS Guardrail (`.agents/skills/git-guardrails/scripts/block-dangerous-git.cjs`)**: Added dedicated CommonJS guardrail script to ensure consistent PreToolUse interception regardless of target repository's module type.
+- **Distribution Package Portability Audit**: Added automated test verifying zero hardcoded local machine paths across npm package tarballs and scaffolded project trees.
+
+### Changed
+
+- **MCP Configuration Template Parity (`.agents/mcp_config.example.json`)**: Synchronized example template to match `.agents/mcp_config.json` 100% byte-for-byte across all 6 services (`git`, `github`, `gitea`, `postgres`, `mysql`, `mssql`).
+- **Preamble & Instruction Budget (`AGENTS.md`)**: Streamlined root instructions to stay strictly within the 12,000-character budget (`11,965` characters) while integrating references to the master skill catalog.
+- **Documentation Overhaul (`README.md`)**: Updated documentation to version 5.3.0, expanding the skills matrix to cover all 10 categories, detailing all 8 lifecycle hook groups, reflecting 45 automated test assertions, and documenting full database MCP connection schemas.
+- **Version Bump**: Bumped version to `5.3.0` across manifests (`package.json`), CLI (`bin/cli.mjs`), installers (`install.ps1`, `install.sh`), test suites (`tests/cli.test.mjs`), and documentation adhering to SemVer 2.0.0.
+
+### Fixed
+- **Git Guardrails Skill References**: Updated [`.agents/skills/git-guardrails/SKILL.md`](.agents/skills/git-guardrails/SKILL.md) to reference `block-dangerous-git.cjs` instead of `.js`.
+- **Internal Documentation Link Standardization**: Standardized repository markdown links in documentation files to relative paths, preventing machine-specific path failures.
+- **Test Double Isolation Standards (`tdd/mocking.md`)**: Added explicit governance banner prohibiting synthetic mocks, stubs, and in-memory simulated stores in production code paths (`src/`, `app/`, `lib/`).
+
+## [5.2.0] - 2026-09-24
+
+### Added
+
+
+- **Smart Workspace Upgrade Command (`upgrade`)**: Introduced `npx @rafaelghif/aac-core upgrade` to safely synchronize core rules, skills, plugins, and hooks from older versions (e.g. `v5.0.3` / `v5.1.0`) to latest without losing custom project work.
+- **Strict User Asset Protection**:
+  - `CONTEXT.md`: Strictly preserved if present; user-defined domain models, bounded contexts, and glossaries are never overwritten.
+  - `.agents/mcp_config.json`: Workspace credentials and private MCP tokens are strictly preserved.
+  - `.scratch/`: Active session handoffs and scratchpads are strictly preserved.
+  - `package.json`: Guaranteed zero pollution; never created or modified in user target repositories.
+- **Smart Hooks Merging**: Upgrades merge `.agents/hooks.json` intelligently—injecting latest framework hooks (`git-guardrails`, `quality-gate`, `session-handoff`, `security-scanner`, `quality-guard`, `context-rehydration`, `code-review-gate`, `task-orchestration`) and updating standard hook definitions while retaining all custom user-defined hooks and user toggle states (`enabled: false/true`).
+- **Security & Secret Scanner Hook & CLI (`security-scanner.cjs`)**: PreToolUse hook intercepting `run_command`, `write_to_file`, and `replace_file_content`. Blocks destructive commands (`git reset --hard`, `git push --force`, `rm -rf /`) and detects exposed API keys, tokens, and private keys.
+- **Quality Code Guard Hook & CLI (`quality-guard.cjs`)**: PreToolUse hook enforcing production realism and the anti-dummy/mock standard (`production-integrity.md`) on production files.
+- **Task Orchestrator & Wave Planner Engine (`task-orchestrator.cjs`)**: DAG task graph engine operating on `.scratch/tasks.json`. Computes parallel execution waves via topological sorting and flags circular dependencies.
+- **Automated Code Reviewer & Complexity Analyzer (`code-analyzer.cjs`)**: Multi-axis diff reviewer (Standards, Security, Ponytail) and complexity analyzer (LOC, cyclomatic branch complexity, Deep Module Ratio).
+- **Memory Engine & PreInvocation Rehydration (`memory-engine.cjs`)**: PreInvocation hook rehydrating cold starts from `.scratch/handoff.md` and maintaining snapshots in `.scratch/active_context.json`.
+- **Extended CLI Tooling (`bin/cli.mjs`)**: Added `aac scan`, `aac quality`, `aac review`, `aac analyze`, `aac tasks`, and `aac memory` subcommands with zero runtime dependencies.
+- **PRD & Technical Specification Protocol (`to-spec/SKILL.md`)**: Upgraded to 10-point production PRD standard including problem statement, user personas & journeys, explicit anti-scope non-goals, functional Given/When/Then acceptance criteria, NFR latency/throughput budgets, Mermaid state machine diagrams, data schemas, error codes, and telemetry.
+- **Task Management & Markdown Sync Engine (`to-tickets`, `task-orchestrator.cjs`)**: Added automated synchronization of markdown tickets into `.scratch/tasks.json` via `aac tasks sync`, runnable automated verification commands (`verificationCmd`), blast radius boundaries, and seam tracking.
+- **Clean Architecture & Domain Purity Protocol (`architecture-and-flow.md`)**: Enforced Hexagonal/Clean Architecture boundaries prohibiting domain core from importing database/HTTP packages, zero cyclic dependencies, and Command-Query Separation (CQS).
+- **Codebase Design & Deep Modules (`codebase-design/SKILL.md`)**: Codified information hiding, eliminating leaked ORM/SQL representations, and maximizing implementation leverage behind minimal public seams.
+- **Robust Business Logic Standards (`coding-standards.md`)**: Added Section 6 on type-driven design ("make illegal states unrepresentable"), idempotency keys for mutations, optimistic locking, UTC temporal precision, and non-floating-point monetary representations.
+- **Architectural & Semantic Diff Linters (`code-analyzer.cjs`)**: Added checks in `reviewDiff` catching hexagonal architecture layer violations, financial floating-point arithmetic, and deep nesting.
+
+### Changed
+
+- **Version Bump**: Bumped framework version to `5.2.0` across manifests (`package.json`), CLI (`bin/cli.mjs`), installers (`install.ps1`, `install.sh`), test suites (`tests/cli.test.mjs`), and documentation (`README.md`), adhering strictly to SemVer 2.0.0 for backwards-compatible feature additions.
+
+## [5.1.0] - 2026-09-24
+
+### Added
+
+
+- **Autonomous Session Continuity & Handoff Hook**: Added [`.agents/hooks/handoff-reminder.cjs`](.agents/hooks/handoff-reminder.cjs) (and `.js`) as a native Antigravity `Stop` lifecycle hook registered in [`.agents/hooks.json`](.agents/hooks.json).
+- **Token Limit Resilience**: When a session is interrupted due to token limits, step ceilings (`max_steps_exceeded`), or abnormal exits where conversational turns are impossible, the hook automatically parses `git status`, diff stat, and `transcript.jsonl` to synthesize `.scratch/handoff.md` without consuming LLM tokens.
+- **Loop Protection**: Built-in 1-turn retry ceiling via `.scratch/.handoff-prompted` guaranteeing zero infinite continuation loops.
+- **Automated Hook Verification Suite**: Added comprehensive test coverage in [`tests/cli.test.mjs`](tests/cli.test.mjs) verifying clean stop allowances, uncommitted code modification gating, loop protection, and abnormal termination auto-synthesis.
+
+### Changed
+
+- **Version Bump**: Bumped version to `5.1.0` across manifests (`package.json`), CLI (`bin/cli.mjs`), installers (`install.ps1`, `install.sh`), test suites (`tests/cli.test.mjs`), and documentation (`README.md`), strictly following SemVer 2.0.0 for backwards-compatible feature additions.
+
+## [5.0.5] - 2026-09-24
+
+### Added
+
+
+- **Always-On Rules Documentation**: Comprehensive documentation of workspace always-on operational rules in [`README.md`](README.md), including `production-integrity.md`, `ponytail.md`, `caveman.md`, `coding-standards.md`, `git-workflow.md`, and `memory-management.md`.
+
+### Changed
+
+- **CI/CD Dual Registry Automation**: Overhauled [`.github/workflows/publish-package.yml`](.github/workflows/publish-package.yml) into a 3-job parallel pipeline to publish packages simultaneously to both npm public registry (`registry.npmjs.org`) and GitHub Packages (`npm.pkg.github.com`) upon release publication.
+- **Trigger De-duplication**: Removed duplicate `push: tags: ['v*']` trigger in GitHub Actions workflow to eliminate race conditions with the `release: [published]` trigger.
+- **Version Bump**: Bumped version to `5.0.5` across manifests (`package.json`), CLI (`bin/cli.mjs`), installers (`install.ps1`, `install.sh`), test suites (`tests/cli.test.mjs`), and documentation (`README.md`).
+
+## [5.0.4] - 2026-09-24
+
+### Added
+
+
+- **Production Integrity & Zero-Assumption Protocol**: Implemented [`production-integrity.md`](.agents/rules/production-integrity.md) (`trigger: always_on`) strictly prohibiting assumptions, hallucinations, dummy/fake mocks, and hardcoded placeholders in production code.
+- **Production Realism Standards**: Integrated production realism, zero-dummy policies, and test fixture isolation into [`coding-standards.md`](.agents/rules/coding-standards.md) and [`AGENTS.md`](AGENTS.md).
+- **Mandatory Clarification Routing**: Wired ambiguous requirements directly to `/grill-me` and native `ask_question` tool.
+
+### Changed
+
+- **Version Bump**: Bumped root framework `@rafaelghif/aac-core` to `v5.0.4` across manifests (`package.json`), CLI (`bin/cli.mjs`), installers (`install.ps1`, `install.sh`), test suites (`tests/cli.test.mjs`), and documentation (`README.md`).
+- **Caveman Learn Skill Release Preparation**: Bumped [`.agents/skills/caveman-learn/package.json`](.agents/skills/caveman-learn/package.json) to `v1.0.1` and configured `"publishConfig": { "access": "public" }` for public NPM registry release.
+
+## [5.0.3] - 2026-09-15
+
+### Added
+
+
+- **Init & Installer Scaffolding Verification**: Added comprehensive assertions in [`tests/cli.test.mjs`](tests/cli.test.mjs) verifying that `bin/cli.mjs init`, `install.ps1`, and `install.sh` create `.scratch/` (with `.gitkeep`) and `.gitignore` alongside `.agents/`, `docs/`, `AGENTS.md`, `GEMINI.md`, `CLAUDE.md`, `CONTEXT.md`, and `skills-lock.json` with zero `package.json` pollution.
+- **Lifecycle Hook Test Verification**: Added automated test coverage in [`tests/cli.test.mjs`](tests/cli.test.mjs) verifying `block-dangerous-git.cjs` (blocking destructive git operations) and `verify-on-stop.cjs` (quality gate allowing clean stops and blocking on regressions).
+- **Test Suite Completeness**: Wired `.agents/skills/caveman-learn/tests/skill-file.test.mjs` into `package.json` `"test"` script, bringing total automated test count to 28 passing tests.
+- **License Restoration**: Restored canonical MIT [`LICENSE`](LICENSE) matching `package.json` manifest and `README.md`.
+- **Manifest Package Completeness**: Included `install.ps1` and `install.sh` in `package.json` `"files"` array to provide offline inspection of standalone installation scripts within the NPM distribution package.
+
+### Changed
+
+- **Version Bump**: Bumped version to `5.0.3` across manifests (`package.json`), CLI (`bin/cli.mjs`), installers (`install.ps1`, `install.sh`), test suites (`tests/cli.test.mjs`), and documentation (`README.md`).
+- **Markdown Link Standard Alignment**: Updated example file links in [`AGENTS.md`](AGENTS.md) to unescaped GitHub-style `file:///` markdown links for instant clickability while strictly maintaining character limits (<12k chars).
+
+### Fixed
+- **CLI Guidance Diagnostics**: Fixed outdated legacy package references in [`bin/cli.mjs`](bin/cli.mjs) (`npx antigravity-agents doctor` and `npx antigravity-agents init`) to canonical `@rafaelghif/aac-core`.
+- **Stop Hook Execution Directory**: Resolved working directory resolution in [`.agents/hooks/verify-on-stop.cjs`](.agents/hooks/verify-on-stop.cjs), [`.agents/hooks/verify-on-stop.js`](.agents/hooks/verify-on-stop.js), and [`.agents/hooks/verify-on-stop.ps1`](.agents/hooks/verify-on-stop.ps1) to resolve two directory levels up (`path.resolve(__dirname, '..', '..')` / `Split-Path -Parent (Split-Path -Parent $PSScriptRoot)`) to the true workspace root, fixing false-positive Stop Quality Gate bypasses.
+- **Test Context Isolation**: Stripped `NODE_TEST_*` environment variables in `verify-on-stop.cjs` and `verify-on-stop.js` child execution to prevent inherited test-runner filtering from bypassing the Stop Quality Gate.
+- **Installer Source Directory Guard**: Added missing source directory existence checks in `install.ps1` and `install.sh` preventing unhandled exceptions when source directory extraction fails.
+
+### Security
+- **NPM Package Secret Exclusion**: Added negative matching rules `!.agents/mcp_config.json` and `!.agents/**/mcp_config.json` in `package.json` `"files"` array along with `.npmignore`, completely eliminating risk of active MCP tokens or PATs leaking into published NPM distribution tarballs.
+
+## [5.0.2] - 2026-09-14
+
+### Fixed
+- **Installer Completeness**: Ensured `docs/` (ADRs, tracker configs, templates), `CLAUDE.md` (`@AGENTS.md`), and `skills-lock.json` are properly included in the NPM distribution manifest (`package.json` `"files"`) and copied by all installers (`npx init`, `install.ps1`, `install.sh`).
+- **Source Directory Init Guard**: Fixed `bin/cli.mjs init` throwing when run inside the framework source repository itself.
+
+## [5.0.1] - 2026-09-14
+
+### Changed
+
+- Bump version to `5.0.1` for NPM registry publication under `@rafaelghif/aac-core`.
+- Synchronized all documentation, CLI, and test suite version assertions to `5.0.1`.
+
+## [5.0.0] - 2026-09-14
+
+### Major Paradigm Shift: Native Google Antigravity 2.0 Architecture
+Version 5.0.0 is a complete rewrite and architectural evolution, moving from custom Python harness scripts (v4 AAC) to first-class, native **Google Antigravity Customization Architecture**:
+
+### Added
+
+
+- **Gemini 3.8 Flash (High) Pairing Directives**: Optimized root [`AGENTS.md`](AGENTS.md) adhering to the **Caveman Principle** (terse, fluff-free technical precision) and **Ponytail Principle** (7-rung minimalist code ladder).
+- **Progressive Disclosure Skills**: Integrated all 64 modular skills in `.agents/skills/` across testing, architecture, planning, code review, and token reduction:
+  - `ponytail` suite (minimalist code ladder, audit, debt, review).
+  - `caveman` suite (ultra-compact token conservation and subagent output).
+  - `mattpocock` suite (`ask-matt`, `to-spec`, `to-tickets`, `tdd`, `code-review`, `wayfinder`, `triage`, `grilling`, `domain-modeling`).
+- **5-Tier Memory Architecture & Cross-Session Protocol**: Implemented `memory-management.md` rule (`trigger: always_on`), root `CONTEXT.md` living domain glossary, `docs/adr/0001-antigravity-5-tier-memory-system.md`, and standardized session handoff templates with `.scratch/` sandboxing.
+- **Multi-Platform Zero-Pollution Installers**:
+  - Universal NPX CLI ([`bin/cli.mjs`](bin/cli.mjs)): `npx @rafaelghif/aac-core init` (or `npx github:rafaelghif/antigravity-agents-core init`).
+  - Standalone Windows PowerShell installer ([`install.ps1`](install.ps1)): `irm https://raw.githubusercontent.com/rafaelghif/antigravity-agents-core/main/install.ps1 | iex`.
+  - Standalone Linux/macOS installer ([`install.sh`](install.sh)): `curl -fsSL https://raw.githubusercontent.com/rafaelghif/antigravity-agents-core/main/install.sh | bash`.
+  - **Zero Package.json Pollution Guarantee**: Installers safely scaffold `.agents/`, `AGENTS.md`, and `CONTEXT.md` without ever writing or overwriting `package.json` in user workspaces (protecting Python, Go, Rust, C++, PHP, and existing Node projects).
+- **Cross-Platform Node.js Lifecycle Hooks & ADR-0002**:
+  - Migrated lifecycle hooks in `.agents/hooks.json` to universal Node.js CommonJS scripts ([`block-dangerous-git.cjs`](.agents/hooks/block-dangerous-git.cjs) and [`verify-on-stop.cjs`](.agents/hooks/verify-on-stop.cjs)), documented in [`docs/adr/0002-cross-platform-node-lifecycle-hooks.md`](docs/adr/0002-cross-platform-node-lifecycle-hooks.md).
+  - Ensures seamless hook execution across both Windows (`cmd /c`) and POSIX (`sh -c`) platforms.
+- **Automated Verification Suites**:
+  - Added unit test suite in [`tests/cli.test.mjs`](tests/cli.test.mjs) verifying CLI commands (`init`, `doctor`, `audit`, `list`) and asserting zero `package.json` creation in target directories.
+  - Added test suite in [`tests/memory-system.test.mjs`](tests/memory-system.test.mjs) verifying memory architecture and 64-skill compliance.
+- **Antigravity Native Lifecycle Hooks**: Configured in `.agents/hooks.json` supporting `PreToolUse` (git guardrails) and `Stop` (`quality-gate` running `verify-on-stop.cjs` to prevent exit with failing tests).
+- **Git Guardrails Hook**: Intercepts `run_command` in Antigravity to block destructive git operations (`push`, `reset --hard`, `clean -f`, `branch -D`) using cross-platform Node.js ([`block-dangerous-git.cjs`](.agents/hooks/block-dangerous-git.cjs)).
+- **Autonomous Multi-Agent Subagent Graphs**: Leverages `invoke_subagent` with isolated workspace branches (`Workspace: "branch"` or `"share"`), enabling concurrent implementation of spec task graphs.
+- **Multi-VCS Model Context Protocol (MCP)**: Native workspace configuration for **Gitea MCP** (stdio) and **GitHub Copilot MCP** (remote SSE) in `.agents/mcp_config.json`.
+- **Workspace Plugins Architecture**: Implemented `.agents/plugins/workspace-integrations/` packaging workspace-scoped MCP servers and sidecars, registered via explicit `.agents/plugins.json` and `.agents/skills.json`.
+- **Background Sidecars Engine**: Integrated persistent background runner architecture (`sidecar.json`) with an automated repository health and branch hygiene monitor (`repo-health`).
+- **Complete 64-Skill Compliance Audit**: Verified all 64 skills against 8 Antigravity operational dimensions across 7 task batches, tracked in `docs/audit-checklist-64-skills.md` (512 checks passing, 100% compliant).
+- **Rule Progressive Disclosure Triggers**: Configured `trigger: always_on` across modular rules (`caveman.md`, `coding-standards.md`, `git-workflow.md`, `ponytail.md`, `memory-management.md`).
+- **Credential Quarantine**: Added comprehensive `.gitignore` sandboxing for `.agents/mcp_config.json`, `.agents/plugins/**/mcp_config.json`, `.env`, `.scratch/*`, tokens, keys, and PATs, alongside sanitized example templates.
+- **Multi-Platform Parity**: Fully tested across Windows PowerShell 5.1+, Windows cmd, macOS, and Linux bash/sh environments.
+
+### Changed
+
+- Refactored all inherited Claude Code specific patterns (`CLAUDE.md`, `.claude/`, generic `Skill` tool calls, `Bash` tool calls) to native Google Antigravity primitives (`AGENTS.md`, `.agents/`, `view_file`, `run_command`, `invoke_subagent`).
+- Cleaned and decoupled workspace configurations from machine-global state (`~/.gemini/config/`).
+
+---
+
+## [4.47.2] - 2026-09-13
+
+### Fixed
+- **Installer Source Validation & CLI Sandbox Alignment**: Fixed `install.py` aborting during release source validation by passing `--source-only` and decoupling external host CLI settings from source archive validation.
+- **Comprehensive Antigravity Settings Sanitizer**: Implemented `sanitize_antigravity_settings` in `scripts/health_check.py`.
+- **Consumer Workspace Validation Scope**: Scoped global CLI settings validation in `scripts/validate.py` to framework development runs only.
+
+[Unreleased]: https://github.com/rafaelghif/antigravity-agents-core/compare/v6.2.1...HEAD
+[6.2.1]: https://github.com/rafaelghif/antigravity-agents-core/compare/v6.2.0...v6.2.1
+[6.2.0]: https://github.com/rafaelghif/antigravity-agents-core/compare/v6.1.0...v6.2.0
+[6.1.0]: https://github.com/rafaelghif/antigravity-agents-core/compare/v6.0.1...v6.1.0
+[6.0.1]: https://github.com/rafaelghif/antigravity-agents-core/compare/v6.0.0...v6.0.1
+[6.0.0]: https://github.com/rafaelghif/antigravity-agents-core/compare/v5.4.0...v6.0.0
+[5.4.0]: https://github.com/rafaelghif/antigravity-agents-core/compare/v5.3.1...v5.4.0
+[5.3.1]: https://github.com/rafaelghif/antigravity-agents-core/compare/v5.3.0...v5.3.1
+[5.3.0]: https://github.com/rafaelghif/antigravity-agents-core/compare/v5.2.0...v5.3.0
+[5.2.0]: https://github.com/rafaelghif/antigravity-agents-core/compare/v5.1.0...v5.2.0
+[5.1.0]: https://github.com/rafaelghif/antigravity-agents-core/compare/v5.0.5...v5.1.0
+[5.0.5]: https://github.com/rafaelghif/antigravity-agents-core/compare/v5.0.4...v5.0.5
+[5.0.4]: https://github.com/rafaelghif/antigravity-agents-core/compare/v5.0.3...v5.0.4
+[5.0.3]: https://github.com/rafaelghif/antigravity-agents-core/compare/v5.0.2...v5.0.3
+[5.0.2]: https://github.com/rafaelghif/antigravity-agents-core/compare/v5.0.1...v5.0.2
+[5.0.1]: https://github.com/rafaelghif/antigravity-agents-core/compare/v5.0.0...v5.0.1
+[5.0.0]: https://github.com/rafaelghif/antigravity-agents-core/compare/v4.47.2...v5.0.0
+[4.47.2]: https://github.com/rafaelghif/antigravity-agents-core/releases/tag/v4.47.2
+

@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="none">
+  <defs>
+    <!-- Primary LuminaCore Gradient: Cyan -> Electric Blue -> Violet -> Warm Amber -->
+    <linearGradient id="lc-grad-main" x1="28" y1="24" x2="228" y2="232" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#22D3EE" />
+      <stop offset="35%" stop-color="#3B82F6" />
+      <stop offset="68%" stop-color="#A855F7" />
+      <stop offset="100%" stop-color="#F59E0B" />
+    </linearGradient>
+
+    <!-- Warm-to-Cyan Accent Gradient for Core & Base -->
+    <linearGradient id="lc-grad-warm" x1="88" y1="64" x2="176" y2="216" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#38BDF8" />
+      <stop offset="52%" stop-color="#C084FC" />
+      <stop offset="100%" stop-color="#FBBF24" />
+    </linearGradient>
+
+    <!-- Subtle Ambient Glow -->
+    <radialGradient id="lc-ambient" cx="50%" cy="46%" r="48%">
+      <stop offset="0%" stop-color="#22D3EE" stop-opacity="0.22" />
+      <stop offset="55%" stop-color="#8B5CF6" stop-opacity="0.10" />
+      <stop offset="100%" stop-color="#0F172A" stop-opacity="0" />
+    </radialGradient>
+
+    <filter id="lc-soft-glow" x="-15%" y="-15%" width="130%" height="130%">
+      <feGaussianBlur stdDeviation="3.5" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Subtle Ambient Halo -->
+  <circle cx="128" cy="120" r="108" fill="url(#lc-ambient)" />
+
+  <g filter="url(#lc-soft-glow)" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Outer Smart Halo & Split Lower Arcs (cleanly separated from bulb base) -->
+    <path
+      d="M 54 114 A 74 74 0 0 1 196 92"
+      stroke="url(#lc-grad-main)"
+      stroke-width="7.5"
+    />
+    <path
+      d="M 92 184 A 74 74 0 0 1 60 154"
+      stroke="url(#lc-grad-main)"
+      stroke-width="7"
+      opacity="0.9"
+    />
+    <path
+      d="M 186 168 A 74 74 0 0 1 164 184"
+      stroke="url(#lc-grad-warm)"
+      stroke-width="7"
+      opacity="0.9"
+    />
+
+    <!-- Left Circuit Wing -->
+    <path
+      d="M 20 112 H 44 L 60 128 V 146"
+      stroke="url(#lc-grad-main)"
+      stroke-width="7"
+    />
+    <circle cx="60" cy="153" r="6" fill="#0B1120" stroke="#38BDF8" stroke-width="5" />
+
+    <!-- Right Circuit Wing -->
+    <path
+      d="M 236 112 H 210 L 194 96 V 136"
+      stroke="url(#lc-grad-warm)"
+      stroke-width="7"
+    />
+    <circle cx="194" cy="144" r="6" fill="#0B1120" stroke="#FBBF24" stroke-width="5" />
+
+    <!-- Lightbulb Outer Silhouette -->
+    <path
+      d="M 103 184 V 168 C 103 158 96 151 89 143 C 79 132 74 118 74 103 C 74 73 98 50 128 50 C 158 50 182 73 182 103 C 182 118 177 132 167 143 C 160 151 153 158 153 168 V 184"
+      stroke="url(#lc-grad-main)"
+      stroke-width="8"
+    />
+
+    <!-- Precision 8-Tooth Core Gear -->
+    <path
+      d="M 122 69 H 134 L 136 77 C 139 78 142 79 144 81 L 151 76 L 159 84 L 154 91 C 156 93 157 96 158 99 L 166 101 V 113 L 158 115 C 157 118 156 121 154 123 L 159 130 L 151 138 L 144 133 C 142 135 139 136 136 137 L 134 145 H 122 L 120 137 C 117 136 114 135 112 133 L 105 138 L 97 130 L 102 123 C 100 121 99 118 98 115 L 90 113 V 101 L 98 99 C 99 96 100 93 102 91 L 97 84 L 105 76 L 112 81 C 114 79 117 78 120 77 Z"
+      stroke="url(#lc-grad-warm)"
+      stroke-width="6"
+    />
+
+    <!-- Inner Filament Circuit Nodes -->
+    <path d="M 128 184 V 116" stroke="url(#lc-grad-main)" stroke-width="7" />
+    <circle cx="128" cy="107" r="9.5" fill="#0B1120" stroke="#22D3EE" stroke-width="6" />
+
+    <path d="M 114 184 V 148 L 105 139" stroke="#38BDF8" stroke-width="5.5" />
+    <circle cx="103" cy="136" r="4.5" fill="#0B1120" stroke="#38BDF8" stroke-width="4" />
+
+    <!-- Bulb Screw Base (3 Clean Bars) -->
+    <line x1="101" y1="198" x2="155" y2="198" stroke="url(#lc-grad-warm)" stroke-width="8" />
+    <line x1="106" y1="213" x2="150" y2="213" stroke="url(#lc-grad-main)" stroke-width="8" />
+    <path d="M 116 227 H 140" stroke="#A855F7" stroke-width="7.5" />
+  </g>
+</svg>
