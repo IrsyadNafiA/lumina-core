@@ -1011,4 +1011,37 @@ async def test_powercalc_energy_automations_schedules_and_bulk_import() -> None:
     assert offline_src == "powercalc_estimate"
 
 
+def test_static_logo_routes_serve_svg_and_png(tmp_path: Path) -> None:
+    """Verify FastAPI static SPA mode serves /luminacore-icon.svg and /luminacore-icon.png."""
+    dist_dir = tmp_path / "dist"
+    dist_dir.mkdir(parents=True, exist_ok=True)
+    (dist_dir / "index.html").write_text("<html><body>LuminaCore</body></html>", encoding="utf-8")
+    (dist_dir / "luminacore-icon.svg").write_text("<svg></svg>", encoding="utf-8")
+    (dist_dir / "luminacore-icon.png").write_bytes(b"\x89PNG\r\n\x1a\n")
+
+    settings = BardiSettings(
+        db_path=":memory:",
+        access_token="",
+        enable_background_poller=False,
+        seed_virtual_devices=False,
+        static_dir=str(dist_dir),
+    )
+    repo = SQLiteRepository(settings.db_path, seed_virtual_devices=False)
+    gw = CompositeBardiGateway(
+        lan_gateway=FakeLanGateway(),
+        virtual_gateway=VirtualBardiGateway(),
+    )
+    app = create_app(settings=settings, repository=repo, gateway=gw)
+    client = TestClient(app)
+
+    svg_res = client.get("/luminacore-icon.svg")
+    assert svg_res.status_code == 200
+    assert "image/svg+xml" in svg_res.headers["content-type"]
+
+    png_res = client.get("/luminacore-icon.png")
+    assert png_res.status_code == 200
+    assert "image/png" in png_res.headers["content-type"]
+
+
+
 

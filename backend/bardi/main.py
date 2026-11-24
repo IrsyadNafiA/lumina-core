@@ -347,6 +347,20 @@ def create_app(
         async def serve_spa_index() -> FileResponse:
             return FileResponse(str(static_path / "index.html"))
 
+        @fastapi_app.get("/luminacore-icon.svg", include_in_schema=False)
+        async def serve_icon_svg() -> Response:
+            icon_path = static_path / "luminacore-icon.svg"
+            if not icon_path.is_file():
+                return Response(status_code=404)
+            return FileResponse(str(icon_path), media_type="image/svg+xml")
+
+        @fastapi_app.get("/luminacore-icon.png", include_in_schema=False)
+        async def serve_icon_png() -> Response:
+            icon_path = static_path / "luminacore-icon.png"
+            if not icon_path.is_file():
+                return Response(status_code=404)
+            return FileResponse(str(icon_path), media_type="image/png")
+
     return fastapi_app
 
 
